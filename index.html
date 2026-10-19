@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { 
+            margin: 0; 
+            background-color: black; 
+            overflow: hidden; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+        }
+        
+        #background-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        .bg-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Scales properly without stretching */
+            opacity: 0;
+            transition: opacity 2s ease-in-out; /* Smooth 2-second crossfade */
+        }
+
+        .bg-image.active {
+            opacity: 1;
+        }
+
+        #clock-container {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            z-index: 2;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8); /* Drop shadow so text is visible on bright photos */
+        }
+
+        #time {
+            font-size: 6rem;
+            font-weight: 300;
+            margin: 0;
+            line-height: 1;
+        }
+
+        #date {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-top: 10px;
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div id="background-container">
+        <!-- USB Images will be injected here automatically -->
+    </div>
+
+    <div id="clock-container">
+        <div id="time">00:00</div>
+        <div id="date">Scanning USB...</div>
+    </div>
+
+    <script>
+        // --- CLOCK LOGIC ---
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            document.getElementById('time').innerText = hours + ':' + minutes + ' ' + ampm;
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date').innerText = now.toLocaleDateString('en-US', options);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- USB SLIDESHOW LOGIC ---
+        let images = [];
+        let currentIndex = 0;
+        const bgContainer = document.getElementById('background-container');
+
+        function startSlideshow() {
+            if (images.length === 0) {
+                document.getElementById('date').innerText += " (No photos found on USB)";
+                return;
+            }
+
+            // Create image tags for all found photos
+            images.forEach((src, index) => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.className = 'bg-image';
+                if (index === 0) img.classList.add('active'); // Show first image immediately
+                bgContainer.appendChild(img);
+            });
+
+            // Swap images every 8 seconds
+            setInterval(() => {
+                const imgElements = document.querySelectorAll('.bg-image');
+                imgElements[currentIndex].classList.remove('active');
+                currentIndex = (currentIndex + 1) % images.length;
+                imgElements[currentIndex].classList.add('active');
+            }, 8000); 
+        }
+
+        function loadUsbPhotos() {
+            try {
+                tizen.filesystem.listStorages(function(storages) {
+                    storages.forEach(function(storage) {
+                        if (storage.type === "EXTERNAL" && storage.state === "MOUNTED") {
+                            tizen.filesystem.resolve(storage.label, function(dir) {
+                                dir.listFiles(function(files) {
+                                    files.forEach(function(file) {
+                                        if (file.isFile && file.name.match(/\.(jpg|jpeg|png)$/i)) {
+                                            images.push(file.toURI());
+                                        }
+                                    });
+                                    startSlideshow();
+                                });
+                            }, function(e) { console.log("Read error: " + e.message); }, "r");
+                        }
+                    });
+                });
+            } catch (error) {
+                console.log("Tizen API missing. Ensure this is running on the TV.");
+            }
+        }
+
+        window.onload = loadUsbPhotos;
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://localhost/AmbientLock" version="1.0.0" viewmodes="fullscreen">
+    <tizen:application id="DEVlock001.AmbientLock" package="DEVlock001" required_version="2.3"/>
+    <content src="index.html"/>
+    <name>Ambient Lock Screen</name>
+    <tizen:privilege name="http://tizen.org/privilege/filesystem.read"/>
+    <tizen:privilege name="http://tizen.org/privilege/externalstorage"/>
+</widget>
