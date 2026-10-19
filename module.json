@@ -1,0 +1,9 @@
+{
+  "name": "AmbientLock",
+  "title": "Ambient Lock Screen",
+  "version": "1.0.0",
+  "description": "Custom lock screen with live clock and USB photo slideshow.",
+  "author": "virat-vk-18",
+  "type": "web",
+  "app_id": "DEVlock001.AmbientLock"
+}
